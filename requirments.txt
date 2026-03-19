@@ -3,3 +3,9 @@ chromadb
 pypdf
 pytestconda
 langchain-community
+langchain-groq
+langchain-huggingface
+langchain-text-splitters
+langchain-google-genai
+langchain-core
+langchain-chroma

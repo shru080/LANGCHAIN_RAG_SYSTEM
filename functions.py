@@ -40,7 +40,7 @@ def get_embedding_functions():
     embeddings = HuggingFaceEndpointEmbeddings(
     model=model,
     task="feature-extraction",
-    huggingfacehub_api_token="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",
+    huggingfacehub_api_token="HUGGINGFACE_API_KEY",
 )  
     return embeddings
 

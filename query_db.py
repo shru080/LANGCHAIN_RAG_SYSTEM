@@ -1,12 +1,11 @@
 import argparse
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_groq import ChatGroq # ✅ Changed
+from langchain_groq import ChatGroq # 
 
 from functions import get_embedding_functions
 
 CHROMA_PATH = "chroma"
-  # ✅ Add your key here
 
 PROMPT_TEMPLATE = """
 Answer the question based only on the following context:
@@ -39,13 +38,13 @@ def query_rag(query_text: str):
     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
     prompt = prompt_template.format(context=context_text, question=query_text)
 
-    # ✅ Replaced Ollama with Gemini
+    
     model = ChatGroq(
     model="groq/compound",  # Free model
     api_key="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"
 )
     response = model.invoke(prompt)
-    response_text = response.content  # ✅ Extract text from response
+    response_text = response.content  
 
     sources = [doc.metadata.get("id", None) for doc, _score in results]
     formatted_response = f"Response: {response_text}\nSources: {sources}"

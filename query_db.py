@@ -41,7 +41,7 @@ def query_rag(query_text: str):
     
     model = ChatGroq(
     model="groq/compound",  # Free model
-    api_key="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"
+    api_key="GROQ_API_KEY"
 )
     response = model.invoke(prompt)
     response_text = response.content  

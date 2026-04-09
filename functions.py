@@ -31,7 +31,7 @@ def split_documents(documents : list[Document]):
     )
     return text_splitter.split_documents(documents)
 
-documents = load_documents()
+# removing this line as it might cause issues if the database is empty ##documents = load_documents()
 
 ## embedding function 
 

@@ -1,4 +1,4 @@
-RAG Pipeline — Document Q&A System
+***RAG Pipeline*** — Document Q&A System
 Retrieval-Augmented Generation with FastAPI, ChromaDB & Groq
 Version 1.0.0
 Overview

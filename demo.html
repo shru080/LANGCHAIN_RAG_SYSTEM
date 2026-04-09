@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Pipeline — Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e11;
+      --surface: #16161a;
+      --surface2: #1e1e24;
+      --border: #2a2a33;
+      --accent: #7f77dd;
+      --accent-dim: #534ab7;
+      --accent-glow: #3c3489;
+      --text: #e8e8f0;
+      --text-muted: #888899;
+      --text-dim: #555566;
+      --success: #1d9e75;
+      --danger: #e24b4a;
+      --mono: 'DM Mono', monospace;
+      --sans: 'Sora', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- Header --- */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .logo {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 600; color: #fff; flex-shrink: 0;
+    }
+    header h1 { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+    header span { font-size: 12px; color: var(--text-muted); font-family: var(--mono); margin-left: auto; }
+
+    /* --- Layout --- */
+    .layout {
+      display: flex;
+      flex: 1;
+    }
+
+    /* --- Sidebar --- */
+    aside {
+      width: 280px;
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      flex-shrink: 0;
+    }
+    .section-label {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Upload */
+    .upload-zone {
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover { border-color: var(--accent); background: rgba(127,119,221,0.05); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-zone .icon { font-size: 22px; margin-bottom: 6px; }
+    .upload-zone p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .upload-zone strong { color: var(--accent); }
+
+    /* Doc list */
+    .doc-list { display: flex; flex-direction: column; gap: 6px; }
+    .doc-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px;
+      background: var(--surface2);
+      border-radius: 7px;
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+    }
+    .doc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+    .empty-docs { font-size: 12px; color: var(--text-dim); font-style: italic; }
+
+    /* Reset */
+    .btn-reset {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--danger);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 8px 12px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .btn-reset:hover { background: rgba(226,75,74,0.08); border-color: var(--danger); }
+
+    /* --- Main --- */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 860px;
+      padding: 2rem;
+      gap: 1.5rem;
+    }
+
+    /* Query box */
+    .query-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .query-box textarea {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      resize: none;
+      line-height: 1.6;
+      min-height: 48px;
+      max-height: 140px;
+    }
+    .query-box textarea::placeholder { color: var(--text-dim); }
+    .btn-send {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 10px 18px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .btn-send:hover { background: var(--accent-dim); }
+    .btn-send:active { transform: scale(0.97); }
+    .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* --- Response card --- */
+    .response-area { display: flex; flex-direction: column; gap: 1rem; }
+
+    .answer-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .answer-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 1rem;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+    }
+    .answer-header .badge {
+      background: rgba(127,119,221,0.15);
+      color: var(--accent);
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-size: 10px;
+    }
+    .answer-text {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--text);
+    }
+
+    /* Sources */
+    .sources-wrap {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .sources-label {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .source-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+    }
+
+    /* Error */
+    .error-card {
+      background: rgba(226,75,74,0.08);
+      border: 1px solid rgba(226,75,74,0.3);
+      border-radius: 12px;
+      padding: 1.25rem;
+      font-size: 13px;
+      color: var(--danger);
+      font-family: var(--mono);
+    }
+
+    /* Spinner */
+    .loader {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      padding: 1rem 0;
+    }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Hint chips */
+    .hint-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .hint-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .hint-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-family: var(--mono);
+      color: var(--text);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #toast.show { opacity: 1; }
+
+    /* Base URL bar */
+    .url-bar {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      margin-bottom: 0.25rem;
+    }
+    .url-bar input {
+      flex: 1; background: none; border: none; outline: none;
+      color: var(--accent); font-family: inherit; font-size: inherit;
+    }
+    .url-bar span { color: var(--text-dim); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">R</div>
+  <h1>RAG Pipeline Demo</h1>
+  <span>api v1.0</span>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside>
+    <div>
+      <div class="section-label">API Base URL</div>
+      <div class="url-bar">
+        <span>http://</span>
+        <input id="baseUrl" value="localhost:8000" />
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Upload PDF</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".pdf" />
+        <div class="icon">📄</div>
+        <p><strong>Click to upload</strong><br/>PDF files only</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Indexed Documents</div>
+      <div class="doc-list" id="docList">
+        <div class="empty-docs">No documents yet</div>
+      </div>
+    </div>
+
+    <div style="margin-top: auto;">
+      <button class="btn-reset" onclick="resetDb()">⚠ Reset Database</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <div>
+      <div class="section-label" style="margin-bottom: 0.75rem;">Ask a question</div>
+      <div class="query-box">
+        <textarea id="queryInput" placeholder="Ask anything about your uploaded documents…" rows="2" onkeydown="handleKey(event)"></textarea>
+        <button class="btn-send" id="sendBtn" onclick="submitQuery()">Ask →</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="hint-row" id="hints">
+        <div class="hint-chip" onclick="setHint(this)">Summarize the document</div>
+        <div class="hint-chip" onclick="setHint(this)">What are the main topics?</div>
+        <div class="hint-chip" onclick="setHint(this)">List key findings</div>
+        <div class="hint-chip" onclick="setHint(this)">What conclusions are drawn?</div>
+      </div>
+    </div>
+
+    <div class="response-area" id="responseArea"></div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const getBase = () => 'http://' + document.getElementById('baseUrl').value.replace(/^https?:\/\//, '');
+
+  function toast(msg, dur = 2500) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), dur);
+  }
+
+  function setHint(el) {
+    document.getElementById('queryInput').value = el.textContent;
+    document.getElementById('queryInput').focus();
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitQuery(); }
+  }
+
+  async function loadDocs() {
+    try {
+      const res = await fetch(getBase() + '/documents');
+      const data = await res.json();
+      const list = document.getElementById('docList');
+      if (!data.documents || data.documents.length === 0) {
+        list.innerHTML = '<div class="empty-docs">No documents yet</div>';
+      } else {
+        list.innerHTML = data.documents.map(d =>
+          `<div class="doc-item"><span class="doc-dot"></span>${d}</div>`
+        ).join('');
+      }
+    } catch { }
+  }
+
+  document.getElementById('fileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    toast('Uploading & indexing…');
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const res = await fetch(getBase() + '/upload', { method: 'POST', body: form });
+      const data = await res.json();
+      if (res.ok) { toast('✓ ' + data.message); loadDocs(); }
+      else toast('Error: ' + data.detail);
+    } catch { toast('Connection failed — is the API running?'); }
+    e.target.value = '';
+  });
+
+  async function submitQuery() {
+    const query = document.getElementById('queryInput').value.trim();
+    if (!query) return;
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+
+    const area = document.getElementById('responseArea');
+    area.innerHTML = `<div class="loader"><div class="spinner"></div>Querying RAG pipeline…</div>`;
+
+    try {
+      const res = await fetch(getBase() + '/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        area.innerHTML = `<div class="error-card">Error ${res.status}: ${data.detail || 'Something went wrong'}</div>`;
+      } else {
+        const chips = (data.sources || []).map(s => `<span class="chip">${s}</span>`).join('');
+        area.innerHTML = `
+          <div class="answer-card">
+            <div class="answer-header">
+              <span>GROQ / compound</span>
+              <span class="badge">RAG</span>
+              <span style="margin-left: auto; color: var(--text-dim);">${new Date().toLocaleTimeString()}</span>
+            </div>
+            <div class="answer-text">${escHtml(data.answer)}</div>
+            ${data.sources?.length ? `
+              <div class="sources-wrap">
+                <div class="sources-label">SOURCES (k=5)</div>
+                <div class="source-chips">${chips}</div>
+              </div>` : ''}
+          </div>`;
+      }
+    } catch {
+      area.innerHTML = `<div class="error-card">Connection failed — is the API running at ${getBase()}?</div>`;
+    }
+    btn.disabled = false;
+  }
+
+  async function resetDb() {
+    if (!confirm('This will clear the entire ChromaDB. Continue?')) return;
+    try {
+      const res = await fetch(getBase() + '/reset', { method: 'DELETE' });
+      const data = await res.json();
+      toast(data.message || 'Database cleared');
+      loadDocs();
+    } catch { toast('Connection failed'); }
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
+  }
+
+  loadDocs();
+  setInterval(loadDocs, 5000);
+</script>
+</body>
+</html>

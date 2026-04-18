@@ -58,10 +58,6 @@ Get your key at: https://console.groq.com/keys
 Step 4 — Fix functions.py
 Remove the bare module-level call on line 27 of functions.py:
 
-# REMOVE this line:
-documents = load_documents()
-
-This line runs on every import and crashes if the data/ folder is empty.
 
 Step 5 — Start the API
 python api.py
